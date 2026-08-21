@@ -43,7 +43,8 @@ def test_get_unexisting_weapons_with_404_code(client):
 
 
 def test_change_one_field_for_current_weapons_success(client):
-    new_weapon_id = client.post("/weapons/", json={"name": "Glock 17", "magazine_capacity": 17, "note":"tak to jest"}).json()["id"]
+    new_weapon_id = client.post("/weapons/", json={"name": "Glock 17", "magazine_capacity": 17,
+                                                   "note":"tak to jest"}).json()["id"]
     response = client.patch(f"/weapons/{new_weapon_id}", json={"magazine_capacity": 19})
 
     assert response.status_code == 200
