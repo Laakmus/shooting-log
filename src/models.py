@@ -16,3 +16,19 @@ class Weapon(Base):
     purchase_price: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
     note: Mapped[str | None]
 
+
+class TrainingSession(Base):
+    __tablename__ = "training_sessions"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    training_date: Mapped[date]
+    place: Mapped[str | None]
+    cost: Mapped[Decimal] = mapped_column(Numeric(10, 2))
+    note: Mapped[str | None]
+
+
+
+
+
+
+
+
