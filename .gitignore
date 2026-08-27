@@ -8,3 +8,4 @@ __pycache__/
 htmlcov/
 .idea/
 .DS_Store
+PLAN.md

@@ -3,8 +3,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session as DBSession
 
 from src.database import get_db
-from src.models import TrainingSession
-from src.schemas import TrainingSessionCreate, TrainingSessionRead, TrainingSessionUpdate
+from src.models import SessionWeapon, TrainingSession, Weapon
+from src.schemas import (
+    SessionWeaponCreate,
+    SessionWeaponRead,
+    TrainingSessionCreate,
+    TrainingSessionRead,
+    TrainingSessionUpdate,
+)
 
 router = APIRouter(prefix="/training", tags=["training"])
 
@@ -51,5 +57,25 @@ def delete_current_training(training_id: int, db: DBSession = Depends(get_db)):
     db.delete(response)
     db.commit()
 
+
+@router.post("/{training_id}/weapons/", response_model=SessionWeaponRead, status_code=201)
+def create_session_weapon(training_id: int, data: SessionWeaponCreate,
+                          db: DBSession = Depends(get_db)) -> SessionWeaponRead:
+    get_current_session(training_id, db)
+    weapon = db.get(Weapon, data.weapon_id)
+    if not weapon:
+        raise HTTPException(status_code=404, detail="Weapon not found")
+    entry = SessionWeapon(**data.model_dump(), session_id=training_id)
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+
+@router.get("/{training_id}/weapons/", response_model=list[SessionWeaponRead], status_code=200)
+def get_current_session_weapon(training_id: int, db: DBSession = Depends(get_db)):
+    current_training_session(training_id, db)
+    response = db.execute(select(SessionWeapon).where(SessionWeapon.session_id == training_id)).scalars().all()
+    return response
 
 
