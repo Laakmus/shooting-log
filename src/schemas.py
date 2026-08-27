@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class TrainingSessionBase(BaseModel):
@@ -59,6 +59,25 @@ class TrainingSessionUpdate(TrainingSessionBase):
     place: str | None = None
     cost: Decimal | None = None
     note: str | None = None
+
+
+class SessionWeaponCreate(BaseModel):
+    weapon_id: int
+    magazines_count: int | None = None
+    rounds_per_magazine: int | None = None
+    rounds_fired: int = Field(gt=0)
+    ammo_cost: Decimal | None = None
+
+
+class SessionWeaponRead(BaseModel):
+    id: int
+    weapon_id: int
+    session_id: int
+    magazines_count: int | None = Field(default=None, gt=0)
+    rounds_per_magazine: int | None = Field(default=None, gt=0)
+    rounds_fired: int
+    ammo_cost: Decimal | None = Field(default=None, gt=0)
+
 
 
 
