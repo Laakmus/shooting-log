@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session as DBSession
 
 from src.database import get_db
 from src.models import SessionWeapon, TrainingSession, Weapon
-from src.services import calculate_rounds
 from src.schemas import (
     SessionWeaponCreate,
     SessionWeaponRead,
@@ -12,6 +11,7 @@ from src.schemas import (
     TrainingSessionRead,
     TrainingSessionUpdate,
 )
+from src.services import calculate_rounds
 
 router = APIRouter(prefix="/training", tags=["training"])
 

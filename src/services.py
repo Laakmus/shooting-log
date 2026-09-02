@@ -1,5 +1,6 @@
 import math
 
+
 def calculate_rounds(capacity: int, magazines_count: int | None = None, rounds_per_magazine: int | None = None,
                      rounds_fired: int | None = None):
 

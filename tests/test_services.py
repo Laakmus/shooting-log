@@ -1,5 +1,7 @@
 import pytest
+
 from src.services import calculate_rounds
+
 
 @pytest.mark.parametrize(
     "kwargs, expected",
