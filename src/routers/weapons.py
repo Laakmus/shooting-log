@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session as DBSession
 
 from src.database import get_db
 from src.models import Weapon
-from src.schemas import WeaponCreate, WeaponRead, WeaponUpdate
+from src.queries import get_count_rounds_fired
+from src.schemas import WeaponCreate, WeaponDetail, WeaponRead, WeaponUpdate
 
 router = APIRouter(prefix="/weapons", tags=["weapons"])
 
@@ -30,9 +31,11 @@ def get_weapons(db: DBSession = Depends(get_db)) -> list[WeaponRead]:
     return db.execute(select(Weapon)).scalars().all()
 
 
-@router.get("/{weapon_id}", response_model=WeaponRead, status_code=200)
+@router.get("/{weapon_id}", response_model=WeaponDetail, status_code=200)
 def get_current_weapon(weapon_id: int, db: DBSession = Depends(get_db)):
-    return current_weapon(weapon_id, db)
+    weapon = current_weapon(weapon_id, db)
+    total = get_count_rounds_fired(db, weapon_id)
+    return WeaponDetail(**WeaponRead.model_validate(weapon).model_dump(), total_rounds=total)
 
 
 @router.patch("/{weapon_id}", response_model=WeaponRead, status_code=200)

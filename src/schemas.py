@@ -78,6 +78,10 @@ class SessionWeaponRead(BaseModel):
     rounds_fired: int
     ammo_cost: Decimal | None = Field(default=None, gt=0)
 
+class WeaponDetail(WeaponRead):
+    total_rounds: int
+
+
 
 
 

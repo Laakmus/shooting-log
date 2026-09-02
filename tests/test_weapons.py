@@ -66,3 +66,30 @@ def test_delete_current_weapons_and_check_data_after_deleted(client):
 
     check_weapon_in_db = client.get(f"/weapons/{weapon_id}")
     assert check_weapon_in_db.status_code == 404
+
+def test_weapon_detail_returns_sum_of_rounds(client):
+    weapon_id = client.post("/weapons/", json={"name": "Glock 17", "magazine_capacity": 17}).json()["id"]
+    training_1_id = client.post("/training/", json={"training_date":"2026-08-25", "cost": 87,}).json()["id"]
+    training_2_id = client.post("/training/", json={"training_date": "2026-08-26", "cost": 87, }).json()["id"]
+    client.post(f"/training/{training_1_id}/weapons/", json={"weapon_id": weapon_id, "rounds_fired": 68})
+    client.post(f"/training/{training_2_id}/weapons/", json={"weapon_id": weapon_id, "rounds_fired": 170})
+    response = client.get(f"/weapons/{weapon_id}/").json()["total_rounds"]
+
+    assert response == 238
+
+def test_weapon_detail_returns_zero_without_entries(client):
+    weapon_id = client.post("/weapons/", json={"name": "CZ P-10C", "magazine_capacity": 15}).json()["id"]
+    response = client.get(f"/weapons/{weapon_id}/").json()["total_rounds"]
+    assert response == 0
+
+def test_weapon_detail_counts_only_this_weapon(client):
+    weapon_id = client.post("/weapons/", json={"name": "Glock 43", "magazine_capacity": 15}).json()["id"]
+    weapon_2_id = client.post("/weapons/", json={"name": "Sig Sauer p226", "magazine_capacity": 15}).json()["id"]
+    training_1_id = client.post("/training/", json={"training_date": "2026-08-20", "cost": 60, }).json()["id"]
+    client.post(f"/training/{training_1_id}/weapons/", json={"weapon_id": weapon_id, "rounds_fired": 50})
+    client.post(f"/training/{training_1_id}/weapons/", json={"weapon_id": weapon_2_id, "rounds_fired": 3})
+    response1 = client.get(f"/weapons/{weapon_2_id}/").json()["total_rounds"]
+    response2 = client.get(f"/weapons/{weapon_id}/").json()["total_rounds"]
+    assert response1 == 3
+    assert response2 == 50
+
