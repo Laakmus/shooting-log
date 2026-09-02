@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session as DBSession
 
 from src.database import get_db
 from src.models import SessionWeapon, TrainingSession, Weapon
+from src.services import calculate_rounds
 from src.schemas import (
     SessionWeaponCreate,
     SessionWeaponRead,
@@ -65,7 +66,14 @@ def create_session_weapon(training_id: int, data: SessionWeaponCreate,
     weapon = db.get(Weapon, data.weapon_id)
     if not weapon:
         raise HTTPException(status_code=404, detail="Weapon not found")
-    entry = SessionWeapon(**data.model_dump(), session_id=training_id)
+    try:
+        magazines_count, rounds_per_magazine, rounds_fired = calculate_rounds(weapon.magazine_capacity,
+                                                data.magazines_count, data.rounds_per_magazine, data.rounds_fired)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    entry = SessionWeapon(weapon_id=data.weapon_id,magazines_count=magazines_count,
+                          rounds_per_magazine=rounds_per_magazine,
+                          rounds_fired=rounds_fired, session_id=training_id, ammo_cost=data.ammo_cost)
     db.add(entry)
     db.commit()
     db.refresh(entry)

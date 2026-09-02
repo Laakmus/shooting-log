@@ -65,7 +65,7 @@ class SessionWeaponCreate(BaseModel):
     weapon_id: int
     magazines_count: int | None = None
     rounds_per_magazine: int | None = None
-    rounds_fired: int = Field(gt=0)
+    rounds_fired: int | None = Field(default=None, gt=0)
     ammo_cost: Decimal | None = None
 
 
