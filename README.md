@@ -6,7 +6,9 @@ Aplikacja odpowiada na pytania, które trudno odtworzyć z pamięci: ile pocisk�
 
 ## Stan projektu
 
-Wczesny etap budowy. Gotowy szkielet: konfiguracja, połączenie z bazą, migracje i pierwszy endpoint.
+W budowie. Działa: CRUD broni i treningów, zapis porcji strzelania z automatycznym przeliczaniem magazynków na pociski oraz licznik pocisków wystrzelonych z każdej broni.
+
+Kolejne kroki: statystyki kosztów, walidacje przypadków brzegowych, migracja przenosząca istniejące dane, optymalizacja zapytań i widoki.
 
 ## Stack
 
@@ -75,10 +77,18 @@ src/
 ├── main.py        punkt wejścia, rejestracja routerów
 ├── config.py      konfiguracja czytana z .env, walidowana przy starcie
 ├── database.py    silnik, sesja, klasa bazowa modeli
-└── routers/       endpointy pogrupowane tematycznie
-alembic/           migracje bazy danych
-tests/             testy
+├── models.py      tabele: Weapon, TrainingSession, SessionWeapon
+├── schemas.py     schematy wejścia i wyjścia (Pydantic), walidacja danych
+├── services.py    logika domenowa — bez bazy i bez HTTP
+├── queries.py     odczyty z bazy: sumy i statystyki
+└── routers/
+    ├── weapons.py    CRUD broni + licznik pocisków
+    └── training.py   CRUD treningów + wpisy o strzelaniu
+alembic/versions/  migracje bazy danych
+tests/             testy jednostkowe i API
 ```
+
+Podział na trzy warstwy jest celowy. `services.py` nie wie o istnieniu bazy ani HTTP, więc jego testy biegają bez PostgreSQL. `queries.py` sięga do bazy, ale nie zna requestów. Routery zajmują się wyłącznie HTTP — łapią wyjątki z warstw niższych i tłumaczą je na kody odpowiedzi.
 
 ## Uwagi
 
