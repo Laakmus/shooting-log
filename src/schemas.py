@@ -82,6 +82,24 @@ class WeaponDetail(WeaponRead):
     total_rounds: int
 
 
+class MonthlyCost(BaseModel):
+    month: str
+    ammo_cost: Decimal
+    training_sessions_cost: Decimal
+
+
+class TotalCost(BaseModel):
+    ammo_cost: Decimal
+    training_sessions_cost: Decimal
+    equipment_cost: Decimal
+    total_cost: Decimal
+
+
+class StatsRead(BaseModel):
+    total: TotalCost
+    monthly: list[MonthlyCost]
+
+
 
 
 
