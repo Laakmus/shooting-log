@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from src.routers import training, weapons, stats
+from src.routers import stats, training, weapons
 
 app = FastAPI()
 
