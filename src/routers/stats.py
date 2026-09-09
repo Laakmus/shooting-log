@@ -1,14 +1,15 @@
-from src.schemas import MonthlyCost, TotalCost, StatsRead
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session as DBSession
+
 from src.database import get_db
 from src.queries import (
+    get_monthly_ammo_cost,
+    get_monthly_range_fees,
     get_total_ammo_cost,
     get_total_equipment_cost,
-    get_monthly_range_fees,
-    get_monthly_ammo_cost,
-    get_total_range_fees
+    get_total_range_fees,
 )
+from src.schemas import StatsRead
 
 router = APIRouter(prefix="/stats", tags=["stats"])
 
