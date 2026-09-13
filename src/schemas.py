@@ -14,10 +14,11 @@ class TrainingSessionBase(BaseModel):
 
 class WeaponCreate(BaseModel):
     name: str
-    magazine_capacity: int
+    magazine_capacity: int = Field(gt=0)
     purchase_date: date | None = None
-    purchase_price: Decimal | None = None
+    purchase_price: Decimal | None = Field(default=None, ge=0, max_digits=10, decimal_places=2)
     note: str | None = None
+
 
 
 class WeaponRead(BaseModel):
@@ -28,20 +29,21 @@ class WeaponRead(BaseModel):
     purchase_date: date | None = None
     purchase_price: Decimal | None = None
     note: str | None = None
+    is_active: bool
 
 
 class WeaponUpdate(BaseModel):
     name: str | None = None
-    magazine_capacity: int | None = None
+    magazine_capacity: int | None= Field(default=None, gt=0)
     purchase_date: date | None = None
-    purchase_price: Decimal | None = None
+    purchase_price: Decimal | None = Field(default=None, ge=0, max_digits=10, decimal_places=2)
     note: str | None = None
 
 
 class TrainingSessionCreate(TrainingSessionBase):
     training_date: date
     place: str | None = None
-    cost: Decimal
+    cost: Decimal = Field( ge=0, max_digits=10, decimal_places=2)
     note: str | None = None
 
 
@@ -57,26 +59,26 @@ class TrainingSessionRead(BaseModel):
 class TrainingSessionUpdate(TrainingSessionBase):
     training_date: date | None = None
     place: str | None = None
-    cost: Decimal | None = None
+    cost: Decimal | None = Field(default=None, ge=0, max_digits=10, decimal_places=2)
     note: str | None = None
 
 
 class SessionWeaponCreate(BaseModel):
     weapon_id: int
-    magazines_count: int | None = None
-    rounds_per_magazine: int | None = None
+    magazines_count: int | None = Field(default=None, gt=0)
+    rounds_per_magazine: int | None = Field(default=None, gt=0)
     rounds_fired: int | None = Field(default=None, gt=0)
-    ammo_cost: Decimal | None = None
+    ammo_cost: Decimal | None = Field(default=None, ge=0, max_digits=10, decimal_places=2)
 
 
 class SessionWeaponRead(BaseModel):
     id: int
     weapon_id: int
     session_id: int
-    magazines_count: int | None = Field(default=None, gt=0)
-    rounds_per_magazine: int | None = Field(default=None, gt=0)
+    magazines_count: int | None = None
+    rounds_per_magazine: int | None = None
     rounds_fired: int
-    ammo_cost: Decimal | None = Field(default=None, gt=0)
+    ammo_cost: Decimal | None = None
 
 class WeaponDetail(WeaponRead):
     total_rounds: int

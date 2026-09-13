@@ -88,3 +88,16 @@ def test_delete_training_session_and_check_data_after_deleted(client):
     assert response.status_code == 204
     check_database = client.get(f"/training/{training.json()['id']}")
     assert check_database.status_code == 404
+
+
+def test_create_training_with_negative_cost_returns_422(client):
+    response = client.post("/training/", json={"training_date": "2026-08-25", "cost": -99})
+
+    assert response.status_code == 422
+
+
+def test_create_free_training_success(client):
+    response = client.post("/training/", json={"training_date": "2026-08-25", "cost": 0})
+
+    assert response.status_code == 201
+    assert response.json()["cost"] == "0.00"

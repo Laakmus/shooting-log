@@ -127,3 +127,14 @@ def test_get_weapons_for_nonexistent_training_returns_404(client):
     response = client.get("/training/99999/weapons/")
 
     assert response.status_code == 404
+
+
+def test_add_entry_with_negative_ammo_cost_returns_422(client):
+    training_id = client.post("/training/", json={"training_date": "2026-08-25", "cost": 80}).json()["id"]
+    weapon_id = client.post("/weapons/", json={"name": "Glock 17", "magazine_capacity": 17}).json()["id"]
+
+    response = client.post(f"/training/{training_id}/weapons/",
+                           json={"weapon_id": weapon_id, "rounds_fired": 45, "ammo_cost": -300})
+
+    assert response.status_code == 422
+    assert client.get(f"/training/{training_id}/weapons/").json() == []
