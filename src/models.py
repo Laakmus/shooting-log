@@ -15,6 +15,7 @@ class Weapon(Base):
     purchase_date: Mapped[date | None]
     purchase_price: Mapped[Decimal | None] = mapped_column(Numeric(10, 2))
     note: Mapped[str | None]
+    is_active: Mapped[bool] = mapped_column(default=True, server_default="true")
 
     session_weapons: Mapped[list["SessionWeapon"]] = relationship(back_populates="weapon")
 

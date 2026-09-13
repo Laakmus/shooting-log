@@ -27,8 +27,12 @@ def add_weapon(data: WeaponCreate, db: DBSession = Depends(get_db)) -> WeaponRea
 
 
 @router.get("/", response_model=list[WeaponRead], status_code=200)
-def get_weapons(db: DBSession = Depends(get_db)) -> list[WeaponRead]:
-    return db.execute(select(Weapon)).scalars().all()
+def get_weapons(include_inactive: bool = False, db: DBSession = Depends(get_db)) -> list[WeaponRead]:
+    stmt = select(Weapon)
+    if not include_inactive:
+        stmt = stmt.where(Weapon.is_active)
+    return db.execute(stmt).scalars().all()
+
 
 
 @router.get("/{weapon_id}", response_model=WeaponDetail, status_code=200)
@@ -51,8 +55,11 @@ def change_current_weapon(weapon_id: int, data: WeaponUpdate, db: DBSession = De
 @router.delete("/{weapon_id}", status_code=204)
 def delete_current_weapon(weapon_id: int, db: DBSession = Depends(get_db)):
     response = current_weapon(weapon_id, db)
-    db.delete(response)
+    response.is_active = False
     db.commit()
+    db.refresh(response)
+
+
 
 
 
