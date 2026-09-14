@@ -7,6 +7,7 @@ from src.models import SessionWeapon, TrainingSession, Weapon
 from src.schemas import (
     SessionWeaponCreate,
     SessionWeaponRead,
+    SessionWeaponUpdate,
     TrainingSessionCreate,
     TrainingSessionRead,
     TrainingSessionUpdate,
@@ -21,6 +22,12 @@ def current_training_session(training_id: int, db: DBSession):
     if not training:
         raise HTTPException(status_code=404, detail="Training not found")
     return training
+
+def current_session_weapon(training_id: int, entry_id: int, db: DBSession):
+    session = db.get(SessionWeapon, entry_id)
+    if session is None or session.session_id != training_id:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return session
 
 
 @router.post("/", response_model=TrainingSessionRead, status_code=201)
@@ -85,5 +92,34 @@ def get_current_session_weapon(training_id: int, db: DBSession = Depends(get_db)
     current_training_session(training_id, db)
     response = db.execute(select(SessionWeapon).where(SessionWeapon.session_id == training_id)).scalars().all()
     return response
+
+
+@router.delete("/{training_id}/weapons/{entry_id}", status_code=204)
+def delete_entry_weapon(training_id: int, entry_id: int, db: DBSession = Depends(get_db)):
+    entry = current_session_weapon(training_id, entry_id, db)
+    db.delete(entry)
+    db.commit()
+
+
+@router.patch("/{training_id}/weapons/{entry_id}", response_model=SessionWeaponRead, status_code=200)
+def update_session_weapon(data: SessionWeaponUpdate, training_id: int, entry_id: int, db: DBSession = Depends(get_db)):
+    entry = current_session_weapon(training_id, entry_id, db)
+    if data.magazines_count or data.rounds_per_magazine or data.rounds_fired:
+        try:
+            magazines_count, rounds_per_magazine, rounds_fired = calculate_rounds(entry.weapon.magazine_capacity,
+                                                    data.magazines_count, data.rounds_per_magazine, data.rounds_fired)
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e))
+        entry.magazines_count = magazines_count
+        entry.rounds_per_magazine = rounds_per_magazine
+        entry.rounds_fired = rounds_fired
+
+    if data.ammo_cost is not None:
+        entry.ammo_cost = data.ammo_cost
+
+    db.commit()
+    db.refresh(entry)
+    return entry
+
 
 

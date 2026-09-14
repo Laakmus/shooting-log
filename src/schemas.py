@@ -101,6 +101,12 @@ class StatsRead(BaseModel):
     total: TotalCost
     monthly: list[MonthlyCost]
 
+class SessionWeaponUpdate(BaseModel):
+    magazines_count: int | None = Field(default=None, gt=0)
+    rounds_per_magazine: int | None = Field(default=None, gt=0)
+    rounds_fired: int | None = Field(default=None, gt=0)
+    ammo_cost: Decimal | None = Field(default=None, ge=0, max_digits=10, decimal_places=2)
+
 
 
 
