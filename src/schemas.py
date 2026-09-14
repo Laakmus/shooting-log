@@ -18,6 +18,8 @@ class WeaponCreate(BaseModel):
     purchase_date: date | None = None
     purchase_price: Decimal | None = Field(default=None, ge=0, max_digits=10, decimal_places=2)
     note: str | None = None
+    is_owned: bool | None = True
+
 
 
 
@@ -30,6 +32,7 @@ class WeaponRead(BaseModel):
     purchase_price: Decimal | None = None
     note: str | None = None
     is_active: bool
+    is_owned: bool
 
 
 class WeaponUpdate(BaseModel):
@@ -38,6 +41,7 @@ class WeaponUpdate(BaseModel):
     purchase_date: date | None = None
     purchase_price: Decimal | None = Field(default=None, ge=0, max_digits=10, decimal_places=2)
     note: str | None = None
+    is_owned: bool | None = None
 
 
 class TrainingSessionCreate(TrainingSessionBase):

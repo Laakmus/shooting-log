@@ -142,3 +142,50 @@ def test_inactive_weapon_keeps_shooting_history(client):
     response = client.get(f"/weapons/{weapon_id}")
     assert response.json()["is_active"] is False
     assert response.json()["total_rounds"] == 45
+
+
+def test_create_weapon_defaults_to_owned(client):
+    """Bez podania is_owned bron jest wlasna - to przypadek najczestszy."""
+    response = client.post("/weapons/", json={"name": "Glock 17", "magazine_capacity": 17})
+
+    assert response.status_code == 201
+    assert response.json()["is_owned"] is True
+
+
+def test_create_club_weapon(client):
+    """Bron klubowa: rejestrowana bez ceny zakupu, ale liczona w statystykach jak kazda inna."""
+    response = client.post("/weapons/", json={"name": "CZ Shadow 2", "magazine_capacity": 15,
+                                              "is_owned": False})
+
+    assert response.status_code == 201
+    assert response.json()["is_owned"] is False
+    assert response.json()["purchase_price"] is None
+
+
+def test_patch_weapon_changes_ownership(client):
+    """Bron klubowa moze zostac odkupiona - zmiana statusu nie rusza pozostalych pol."""
+    weapon_id = client.post("/weapons/", json={"name": "Glock 19", "magazine_capacity": 15,
+                                               "is_owned": False}).json()["id"]
+
+    response = client.patch(f"/weapons/{weapon_id}", json={"is_owned": True})
+
+    assert response.status_code == 200
+    assert response.json()["is_owned"] is True
+    assert response.json()["name"] == "Glock 19"
+    assert response.json()["magazine_capacity"] == 15
+    assert response.json()["is_active"] is True
+
+
+def test_club_weapon_counts_in_statistics(client):
+    """Pociski z broni klubowej licza sie normalnie - to o nich mowia statystyki."""
+    weapon_id = client.post("/weapons/", json={"name": "Walther PDP", "magazine_capacity": 18,
+                                               "is_owned": False}).json()["id"]
+    training_id = client.post("/training/", json={"training_date": "2026-08-20", "cost": 60}).json()["id"]
+    entry = client.post(f"/training/{training_id}/weapons/",
+                        json={"weapon_id": weapon_id, "rounds_fired": 54, "ammo_cost": 160})
+    assert entry.status_code == 201
+
+    assert client.get(f"/weapons/{weapon_id}").json()["total_rounds"] == 54
+    total = client.get("/stats/").json()["total"]
+    assert total["ammo_cost"] == '160.00'
+    assert total["equipment_cost"] == '0'
