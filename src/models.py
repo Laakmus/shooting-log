@@ -27,14 +27,15 @@ class TrainingSession(Base):
     cost: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     note: Mapped[str | None]
 
-    session_weapons: Mapped[list["SessionWeapon"]] = relationship(back_populates="session")
+    session_weapons: Mapped[list["SessionWeapon"]] = relationship(back_populates="session",
+                                                                  cascade="all, delete-orphan", passive_deletes=True)
 
 
 class SessionWeapon(Base):
     __tablename__ = "sessions_weapons"
     id: Mapped[int] = mapped_column(primary_key=True)
     weapon_id: Mapped[int] = mapped_column(ForeignKey("weapons.id"))
-    session_id: Mapped[int] = mapped_column(ForeignKey("training_sessions.id"))
+    session_id: Mapped[int] = mapped_column(ForeignKey("training_sessions.id", ondelete="CASCADE"))
     magazines_count: Mapped[int | None]
     rounds_per_magazine: Mapped[int | None]
     rounds_fired: Mapped[int]
