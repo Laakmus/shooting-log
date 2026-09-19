@@ -1,5 +1,9 @@
 from datetime import date, timedelta
 
+from sqlalchemy import select
+
+from src.models import SessionWeapon
+
 
 def test_create_training_session_success(client):
     response = client.post("/training/", json={"training_date":"2026-08-25",
@@ -80,7 +84,7 @@ def test_patch_nonexistent_training_session_returns_404(client):
     response = client.patch("/training/99999999", json={"training_date": "2026-08-25", "cost": 87})
     assert response.status_code == 404
 
-def test_delete_training_session_and_check_data_after_deleted(client):
+def test_delete_empty_training_session_and_check_data_after_deleted(client):
     training = client.post("/training/", json={"training_date": "2026-08-25", "cost": 87})
     training_id = training.json()["id"]
     assert training.status_code == 201
@@ -101,3 +105,21 @@ def test_create_free_training_success(client):
 
     assert response.status_code == 201
     assert response.json()["cost"] == "0.00"
+
+
+def test_delete_training_session_with_data_check_session_weapons_after_deleted(client, db_session):
+    weapon_id = client.post("/weapons/", json={"name": "Walther PDP 4 INT", "magazine_capacity": 15}).json()["id"]
+    training = client.post("/training/", json={"training_date": "2026-09-19", "cost": 50})
+    training_id = training.json()["id"]
+    entry_id =client.post(f"/training/{training_id}/weapons/",
+                                    json={"weapon_id": weapon_id, "rounds_fired": 50}).json()["id"]
+    response = client.delete(f"/training/{training_id}")
+
+    assert response.status_code == 204
+
+    check_data = db_session.execute(select(SessionWeapon)
+                                    .where(SessionWeapon.id == entry_id)).scalar()
+    assert check_data is None
+
+
+
