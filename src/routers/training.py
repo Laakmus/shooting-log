@@ -106,13 +106,16 @@ def update_session_weapon(data: SessionWeaponUpdate, training_id: int, entry_id:
     entry = current_session_weapon(training_id, entry_id, db)
 
     rounds_per_magazine = data.rounds_per_magazine
+    rounds_fired = data.rounds_fired
+    magazines_count = data.magazines_count
     if rounds_per_magazine is None:
         rounds_per_magazine = entry.rounds_per_magazine
-
+    if magazines_count is None and rounds_fired is None:
+        magazines_count = entry.magazines_count
     if data.magazines_count or data.rounds_per_magazine or data.rounds_fired:
         try:
             magazines_count, rounds_per_magazine, rounds_fired = calculate_rounds(entry.weapon.magazine_capacity,
-                                                    data.magazines_count, rounds_per_magazine, data.rounds_fired)
+                                                    magazines_count, rounds_per_magazine, rounds_fired)
         except ValueError as e:
             raise HTTPException(status_code=422, detail=str(e))
         entry.magazines_count = magazines_count
