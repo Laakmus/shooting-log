@@ -104,10 +104,18 @@ def delete_entry_weapon(training_id: int, entry_id: int, db: DBSession = Depends
 @router.patch("/{training_id}/weapons/{entry_id}", response_model=SessionWeaponRead, status_code=200)
 def update_session_weapon(data: SessionWeaponUpdate, training_id: int, entry_id: int, db: DBSession = Depends(get_db)):
     entry = current_session_weapon(training_id, entry_id, db)
+
+    rounds_per_magazine = data.rounds_per_magazine
+    rounds_fired = data.rounds_fired
+    magazines_count = data.magazines_count
+    if rounds_per_magazine is None:
+        rounds_per_magazine = entry.rounds_per_magazine
+    if magazines_count is None and rounds_fired is None:
+        magazines_count = entry.magazines_count
     if data.magazines_count or data.rounds_per_magazine or data.rounds_fired:
         try:
             magazines_count, rounds_per_magazine, rounds_fired = calculate_rounds(entry.weapon.magazine_capacity,
-                                                    data.magazines_count, data.rounds_per_magazine, data.rounds_fired)
+                                                    magazines_count, rounds_per_magazine, rounds_fired)
         except ValueError as e:
             raise HTTPException(status_code=422, detail=str(e))
         entry.magazines_count = magazines_count

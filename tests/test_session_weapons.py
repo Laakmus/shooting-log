@@ -250,3 +250,43 @@ def test_patch_nonexistent_entry_returns_404(client):
     response = client.patch(f"/training/{training_id}/weapons/9999", json={"magazines_count": 2})
 
     assert response.status_code == 404
+
+def test_patch_entry_with_only_magazines_count_keeps_rounds_per_magazine(client):
+    weapon_id = client.post("/weapons/", json={"name":"Walther pdp 4", "magazine_capacity": 15}).json()["id"]
+    training_id = client.post("/training/", json={"training_date": "2026-06-25", "cost": 87}).json()["id"]
+    entry_id = client.post(f"/training/{training_id}/weapons/",
+                           json={"weapon_id": weapon_id, "magazines_count": 1, "rounds_per_magazine": 7}).json()["id"]
+
+    response = client.patch(f"/training/{training_id}/weapons/{entry_id}", json={"magazines_count": 2})
+    assert response.status_code == 200
+    assert response.json()["rounds_fired"] == 14
+    assert response.json()["rounds_per_magazine"] == 7
+    assert response.json()["magazines_count"] == 2
+
+
+def test_patch_entry_with_only_rounds_per_magazine_keeps_magazines_count(client):
+    weapon_id = client.post("/weapons/", json={"name": "Walther pdp 4", "magazine_capacity": 15}).json()["id"]
+    training_id = client.post("/training/", json={"training_date": "2026-06-25", "cost": 87}).json()["id"]
+    entry_id = client.post(f"/training/{training_id}/weapons/",
+                           json={"weapon_id": weapon_id, "magazines_count": 1, "rounds_per_magazine": 7}).json()["id"]
+
+    response = client.patch(f"/training/{training_id}/weapons/{entry_id}", json={"rounds_per_magazine": 8})
+
+    assert response.status_code == 200
+    assert response.json()["rounds_fired"] == 8
+    assert response.json()["rounds_per_magazine"] == 8
+    assert response.json()["magazines_count"] == 1
+
+
+def test_patch_entry_with_only_rounds_fired_recalculates_magazines_count(client):
+    weapon_id = client.post("/weapons/", json={"name": "Walther pdp 4", "magazine_capacity": 15}).json()["id"]
+    training_id = client.post("/training/", json={"training_date": "2026-06-25", "cost": 87}).json()["id"]
+    entry_id = client.post(f"/training/{training_id}/weapons/",
+                           json={"weapon_id": weapon_id, "magazines_count": 1, "rounds_per_magazine": 7}).json()["id"]
+
+    response = client.patch(f"/training/{training_id}/weapons/{entry_id}", json={"rounds_fired": 20})
+
+    assert response.status_code == 200
+    assert response.json()["rounds_fired"] == 20
+    assert response.json()["rounds_per_magazine"] == 7
+    assert response.json()["magazines_count"] == 3
