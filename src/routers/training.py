@@ -73,6 +73,8 @@ def create_session_weapon(training_id: int, data: SessionWeaponCreate,
     weapon = db.get(Weapon, data.weapon_id)
     if not weapon:
         raise HTTPException(status_code=404, detail="Weapon not found")
+    if not weapon.is_active:
+        raise HTTPException(status_code=422, detail="Weapon is not active")
     try:
         magazines_count, rounds_per_magazine, rounds_fired = calculate_rounds(weapon.magazine_capacity,
                                                 data.magazines_count, data.rounds_per_magazine, data.rounds_fired)

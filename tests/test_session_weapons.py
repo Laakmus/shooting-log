@@ -290,3 +290,31 @@ def test_patch_entry_with_only_rounds_fired_recalculates_magazines_count(client)
     assert response.json()["rounds_fired"] == 20
     assert response.json()["rounds_per_magazine"] == 7
     assert response.json()["magazines_count"] == 3
+
+
+def test_add_entry_for_inactive_weapon_returns_422(client):
+    weapon_id = client.post("/weapons/", json={"name": "CZ 75 P-01", "magazine_capacity": 17}).json()["id"]
+    training_id = client.post("/training/", json={"training_date": "2026-09-20", "cost": 0}).json()["id"]
+    deactivate = client.delete(f"/weapons/{weapon_id}")
+    assert deactivate.status_code == 204
+
+    response = client.post(f"/training/{training_id}/weapons/",
+                           json={"weapon_id": weapon_id, "rounds_fired": 100,
+                                 "magazines_count": 10, "rounds_per_magazine": 10})
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Weapon is not active"
+
+
+def test_patch_entry_for_inactive_weapon_is_allowed(client):
+    weapon_id = client.post("/weapons/", json={"name": "Cz 75 P-01", "magazine_capacity": 17}).json()["id"]
+    training_id = client.post("/training/", json={"training_date": "2026-09-20", "cost": 0}).json()["id"]
+    entry_id = client.post(f"/training/{training_id}/weapons/",
+                           json={"weapon_id": weapon_id, "magazines_count": 10}).json()["id"]
+    deactivate = client.delete(f"/weapons/{weapon_id}")
+    assert deactivate.status_code == 204
+
+    response = client.patch(f"/training/{training_id}/weapons/{entry_id}", json={"magazines_count": 5})
+    assert response.status_code == 200
+    assert response.json()["magazines_count"] == 5
+    assert response.json()["rounds_fired"] == 85
+    assert response.json()["rounds_per_magazine"] == 17
