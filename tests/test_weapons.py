@@ -1,12 +1,15 @@
+from datetime import date, timedelta
+
 
 def test_create_weapon_success(client):
-    response = client.post("/weapons/", json={"name": "Glock 17", "magazine_capacity": 17})
+    response = client.post("/weapons/", json={"name": "Glock 17", "magazine_capacity": 17, "purchase_date": None})
 
     assert response.status_code == 201
     data = response.json()
     assert data["id"] is not None
     assert data["name"] == "Glock 17"
     assert data["magazine_capacity"] == 17
+
 
 
 def test_create_weapon_without_capacity(client):
@@ -175,6 +178,15 @@ def test_patch_weapon_changes_ownership(client):
     assert response.json()["magazine_capacity"] == 15
     assert response.json()["is_active"] is True
 
+def test_patch_weapon_with_future_purchase_date_returns_422(client):
+    response = client.post("/weapons/", json={"name": "Glock 19", "magazine_capacity": 15})
+    assert response.status_code == 201
+    weapon_id = response.json()["id"]
+    response2 = client.patch(f"/weapons/{weapon_id}",
+                             json={"purchase_date": (date.today() + timedelta(days=1)).isoformat()})
+    assert response2.status_code == 422
+
+
 
 def test_club_weapon_counts_in_statistics(client):
     """Pociski z broni klubowej licza sie normalnie - to o nich mowia statystyki."""
@@ -189,3 +201,20 @@ def test_club_weapon_counts_in_statistics(client):
     total = client.get("/stats/").json()["total"]
     assert total["ammo_cost"] == '160.00'
     assert total["equipment_cost"] == '0'
+
+
+def test_create_weapon_with_future_purchase_date_returns_422(client):
+    response = client.post("/weapons/", json={"name": "Walther PDP", "magazine_capacity": 18,
+                                              "purchase_date": (date.today() + timedelta(days=1)).isoformat()})
+    assert response.status_code == 422
+
+
+def test_create_weapon_with_today_purchase_date_is_allowed(client):
+    response = client.post("/weapons/", json={"name": "Walther PDP", "magazine_capacity": 18,
+                                              "purchase_date": (date.today()).isoformat()})
+    assert response.status_code == 201
+
+def test_create_weapon_with_purchase_date_is_null_returns_201(client):
+    response = client.post("/weapons/", json={"name": "Walther PDP", "magazine_capacity": 18,
+                                                "purchase_date": None})
+    assert response.status_code == 201
