@@ -12,7 +12,16 @@ class TrainingSessionBase(BaseModel):
             raise ValueError("Training date must be in the past")
         return v
 
-class WeaponCreate(BaseModel):
+
+class WeaponBase(BaseModel):
+    @field_validator("purchase_date", check_fields=False)
+    @classmethod
+    def validate_purchase_date(cls, v):
+        if v is not None and v > date.today():
+            raise ValueError("Purchase date must not be in the future")
+        return v
+
+class WeaponCreate(WeaponBase):
     name: str
     magazine_capacity: int = Field(gt=0)
     purchase_date: date | None = None
@@ -35,7 +44,7 @@ class WeaponRead(BaseModel):
     is_owned: bool
 
 
-class WeaponUpdate(BaseModel):
+class WeaponUpdate(WeaponBase):
     name: str | None = None
     magazine_capacity: int | None= Field(default=None, gt=0)
     purchase_date: date | None = None
