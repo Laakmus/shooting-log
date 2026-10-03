@@ -17,6 +17,8 @@ class Weapon(Base):
     note: Mapped[str | None]
     is_active: Mapped[bool] = mapped_column(default=True, server_default="true")
     is_owned: Mapped[bool] = mapped_column(default=True, server_default="true")
+    is_seed: Mapped[bool] = mapped_column(default=False, server_default="false")
+
     session_weapons: Mapped[list["SessionWeapon"]] = relationship(back_populates="weapon")
 
 class TrainingSession(Base):
@@ -26,6 +28,7 @@ class TrainingSession(Base):
     place: Mapped[str | None]
     cost: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     note: Mapped[str | None]
+    is_seed: Mapped[bool] = mapped_column(default=False, server_default="false")
 
     session_weapons: Mapped[list["SessionWeapon"]] = relationship(back_populates="session",
                                                                   cascade="all, delete-orphan", passive_deletes=True)
