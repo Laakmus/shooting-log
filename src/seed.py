@@ -1,3 +1,4 @@
+import argparse
 import random
 from datetime import date, timedelta
 from decimal import Decimal
@@ -79,11 +80,24 @@ def clear_seed_data(db: Session) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Generate or remove seed data")
+    parser.add_argument("--weeks", type=int, default=52, help="Number of weeks to generate")
+    parser.add_argument("--clear", action="store_true", help="Clear seed data")
+    args = parser.parse_args()
+
     with Session(engine) as db:
+        if args.clear:
+            clear_seed_data(db)
+            print("Seed data cleared")
+            return
+
+        clear_seed_data(db)
         weapons = create_seed_weapons(db)
         print(f"Created {len(weapons)} weapons")
-        trainings = create_seed_trainings(db, random.randint(10, 20))
+        trainings = create_seed_trainings(db=db, weeks=args.weeks)
         print(f"Created {len(trainings)} training sessions")
+        entries = create_seed_entries(db=db, weapons=weapons, trainings=trainings)
+        print(f"Created {len(entries)} entries")
 
 
 if __name__ == "__main__":
