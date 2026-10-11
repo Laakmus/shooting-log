@@ -4,7 +4,16 @@ import { ConfirmDelete } from "./ConfirmDelete";
 import { useToast } from "./Toast";
 
 /** Asks before deleting a training together with its shooting entries. Open while `training` is set. */
-export function DeleteTrainingDialog({ training, onClose }: { training: Training | null; onClose: () => void }) {
+export function DeleteTrainingDialog({
+  training,
+  onClose,
+  onDeleted,
+}: {
+  training: Training | null;
+  onClose: () => void;
+  /** Called after a successful deletion, e.g. to leave the deleted training's own view. */
+  onDeleted?: () => void;
+}) {
   const toast = useToast();
   const remove = useDeleteTraining();
 
@@ -29,6 +38,7 @@ export function DeleteTrainingDialog({ training, onClose }: { training: Training
           onSuccess: () => {
             close();
             toast("Usunięto");
+            onDeleted?.();
           },
         });
       }}
