@@ -255,6 +255,30 @@ export interface components {
             /** Note */
             note?: string | null;
         };
+        /** TrainingSessionDetail */
+        TrainingSessionDetail: {
+            /** Id */
+            id: number;
+            /**
+             * Training Date
+             * Format: date
+             */
+            training_date: string;
+            /** Place */
+            place?: string | null;
+            /** Cost */
+            cost: string;
+            /** Note */
+            note?: string | null;
+            /** Weapons */
+            weapons: components["schemas"]["TrainingWeapon"][];
+            /** Total Rounds */
+            total_rounds: number;
+            /** Ammo Cost */
+            ammo_cost: string;
+            /** Total Cost */
+            total_cost: string;
+        };
         /** TrainingSessionRead */
         TrainingSessionRead: {
             /** Id */
@@ -281,6 +305,13 @@ export interface components {
             cost?: number | string | null;
             /** Note */
             note?: string | null;
+        };
+        /** TrainingWeapon */
+        TrainingWeapon: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -600,7 +631,14 @@ export interface operations {
     };
     get_all_training_sessions_training__get: {
         parameters: {
-            query?: never;
+            query?: {
+                weapon_id?: number | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                sort?: "date_desc" | "date_asc" | "cost_desc" | "cost_asc";
+                limit?: number | null;
+                offset?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -613,7 +651,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TrainingSessionRead"][];
+                    "application/json": components["schemas"]["TrainingSessionDetail"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -668,7 +715,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TrainingSessionRead"];
+                    "application/json": components["schemas"]["TrainingSessionDetail"];
                 };
             };
             /** @description Validation Error */

@@ -69,6 +69,18 @@ class TrainingSessionRead(BaseModel):
     note: str | None = None
 
 
+class TrainingWeapon(BaseModel):
+    id: int
+    name: str
+
+
+class TrainingSessionDetail(TrainingSessionRead):
+    weapons: list[TrainingWeapon]
+    total_rounds: int
+    ammo_cost: Decimal
+    total_cost: Decimal
+
+
 class TrainingSessionUpdate(TrainingSessionBase):
     training_date: date | None = None
     place: str | None = None

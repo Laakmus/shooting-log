@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session as DBSession
 
@@ -82,3 +84,58 @@ def get_monthly_ammo_cost(db: DBSession):
                           .order_by(date_month)
                           ).all()
 
+
+def filter_trainings(stmt, weapon_id: int | None = None, date_from: date | None = None,
+                     date_to: date | None = None):
+    if weapon_id is not None:
+        stmt = stmt.where(TrainingSession.id.in_(select(SessionWeapon.session_id)
+                                                 .where(SessionWeapon.weapon_id == weapon_id)))
+    if date_from is not None:
+        stmt = stmt.where(TrainingSession.training_date >= date_from)
+    if date_to is not None:
+        stmt = stmt.where(TrainingSession.training_date <= date_to)
+    return stmt
+
+
+def get_trainings_with_stats(db: DBSession, weapon_id: int | None = None, date_from: date | None = None,
+                             date_to: date | None = None, sort: str = "date_desc",
+                             limit: int | None = None, offset: int = 0):
+    ammo_cost = func.coalesce(func.sum(SessionWeapon.ammo_cost), 0)
+    total_cost = ammo_cost + TrainingSession.cost
+    sort_options = {
+        "date_desc": TrainingSession.training_date.desc(),
+        "date_asc": TrainingSession.training_date.asc(),
+        "cost_desc": total_cost.desc(),
+        "cost_asc": total_cost.asc(),
+    }
+    stmt = (select(TrainingSession,
+                   func.coalesce(func.sum(SessionWeapon.rounds_fired), 0),
+                   ammo_cost,
+                   total_cost)
+            .outerjoin(SessionWeapon, SessionWeapon.session_id == TrainingSession.id)
+            .group_by(TrainingSession.id)
+            .order_by(sort_options[sort], TrainingSession.id.desc())
+            .limit(limit)
+            .offset(offset))
+    stmt = filter_trainings(stmt, weapon_id, date_from, date_to)
+    return db.execute(stmt).all()
+
+
+def get_count_trainings(db: DBSession, weapon_id: int | None = None, date_from: date | None = None,
+                        date_to: date | None = None):
+    stmt = filter_trainings(select(func.count(TrainingSession.id)), weapon_id, date_from, date_to)
+    return db.execute(stmt).scalar()
+
+
+def get_training_totals(db: DBSession, training_id: int):
+    return db.execute(select(func.coalesce(func.sum(SessionWeapon.rounds_fired), 0),
+                             func.coalesce(func.sum(SessionWeapon.ammo_cost), 0))
+                      .where(SessionWeapon.session_id == training_id)).one()
+
+
+def get_trainings_weapons(db: DBSession, training_ids: list[int]):
+    return db.execute(select(SessionWeapon.session_id, Weapon.id, Weapon.name)
+                      .join(Weapon, Weapon.id == SessionWeapon.weapon_id)
+                      .where(SessionWeapon.session_id.in_(training_ids))
+                      .distinct()
+                      .order_by(Weapon.name, Weapon.id)).all()
