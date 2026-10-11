@@ -2,17 +2,17 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { formatCount, formatMonth, plural } from "../api/format";
 import { formatMoney } from "../api/money";
-import { useWeaponsWithTotals, type WeaponDetail } from "../api/weapons";
+import { costPerRound, useWeapons, type WeaponDetail } from "../api/weapons";
 import { Button } from "../components/Button";
 import { IconButton } from "../components/IconButton";
 import { LoadError } from "../components/LoadError";
-import { MissingEndpoint } from "../components/MissingEndpoint";
 import { Page } from "../components/Page";
 import { RetireWeaponDialog } from "../components/RetireWeaponDialog";
 import { Tag } from "../components/Tag";
 import { WeaponFormModal } from "../components/WeaponFormModal";
 
 const ROUNDS = ["pocisk", "pociski", "pocisków"] as const;
+const SESSIONS = ["trening", "treningi", "treningów"] as const;
 
 function summary(weapons: WeaponDetail[]): string {
   const active = weapons.filter((weapon) => weapon.is_active).length;
@@ -80,12 +80,15 @@ function WeaponCard({ weapon, onOpen, onEdit, onRetire }: WeaponCardProps) {
           {formatCount(weapon.total_rounds)}
           <span className="ml-1 text-[11px] font-medium tracking-normal text-muted">poc.</span>
         </span>
-        <span className="text-[11.5px] text-muted">
-          treningi <MissingEndpoint />
+        <span className="num text-[15px] leading-none font-semibold text-muted">
+          {weapon.sessions_count === 0
+            ? "nieużywana"
+            : `${formatCount(weapon.sessions_count)} ${plural(weapon.sessions_count, SESSIONS)}`}
         </span>
       </div>
-      <div className="mt-[10px] mb-[13px] text-[11.5px] text-muted">
-        {weapon.is_owned ? "za strzał z bronią" : "za strzał"} <MissingEndpoint />
+      <div className="num mt-[10px] mb-[13px] flex flex-wrap items-baseline gap-[5px] text-[12.5px] leading-none font-medium">
+        <span className="text-[11.5px] text-muted">{weapon.is_owned ? "za strzał z bronią" : "za strzał"}</span>
+        {formatMoney(costPerRound(weapon))}
       </div>
 
       <div className="mt-auto flex justify-between gap-2 border-t border-line pt-[10px] text-[11.5px] text-muted tabular-nums">
@@ -141,7 +144,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 
 export function Weapons() {
   const navigate = useNavigate();
-  const { weapons, isPending, error, refetch } = useWeaponsWithTotals();
+  const { data: weapons, isPending, error, refetch } = useWeapons();
 
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<WeaponDetail | null>(null);
@@ -158,11 +161,11 @@ export function Weapons() {
   if (error) {
     return (
       <Page title="Moja broń" subtitle="Lista broni jest chwilowo niedostępna.">
-        <LoadError message={error.message} onRetry={refetch} />
+        <LoadError message={error.message} onRetry={() => void refetch()} />
       </Page>
     );
   }
-  if (isPending || !weapons) return <Page title="Moja broń" subtitle="Wczytywanie…" />;
+  if (isPending) return <Page title="Moja broń" subtitle="Wczytywanie…" />;
 
   if (weapons.length === 0) {
     return (

@@ -21,6 +21,32 @@ export function formatMonth(isoDate: string): string {
   return `${month}.${year}`;
 }
 
+const MONTHS_GENITIVE = [
+  "stycznia",
+  "lutego",
+  "marca",
+  "kwietnia",
+  "maja",
+  "czerwca",
+  "lipca",
+  "sierpnia",
+  "września",
+  "października",
+  "listopada",
+  "grudnia",
+] as const;
+
+/** ISO date "2026-09-08" as "września 2026". */
+export function formatMonthName(isoDate: string): string {
+  const [year, month] = isoDate.split("-");
+  return `${MONTHS_GENITIVE[Number(month) - 1] ?? month} ${year}`;
+}
+
+/** ISO date "2026-09-08" as "8 września 2026". */
+export function formatLongDate(isoDate: string): string {
+  return `${Number(isoDate.split("-")[2])} ${formatMonthName(isoDate)}`;
+}
+
 /** Today's date in the browser's time zone as "YYYY-MM-DD" (the format of <input type="date">). */
 export function todayIso(): string {
   const now = new Date();
