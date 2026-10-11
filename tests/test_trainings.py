@@ -77,7 +77,7 @@ def test_patch_changes_only_given_field(client):
 
 def test_patch_with_future_date_returns_422(client):
     training = client.post("/training/", json={"training_date": "2026-08-25", "cost": 87})
-    response = client.patch(f"/training/{training.json()['id']}/", json={"training_date": "2222-08-23"})
+    response = client.patch(f"/training/{training.json()['id']}", json={"training_date": "2222-08-23"})
     assert response.status_code == 422
 
 def test_patch_nonexistent_training_session_returns_404(client):
