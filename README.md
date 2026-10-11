@@ -98,6 +98,18 @@ npm run gen:api
 npm run typecheck
 ```
 
+## Backup
+
+```bash
+./scripts/backup.sh
+```
+
+Dumps the whole database from the Docker container into `backups/` (ignored by git), one file per run, named with the date and time. To restore a dump:
+
+```bash
+docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < backups/<file>.sql
+```
+
 ## Struktura
 
 ```
