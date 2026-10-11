@@ -1,14 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import date
+from typing import Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DBSession
 
 from src.database import get_db
 from src.models import SessionWeapon, TrainingSession, Weapon
+from src.queries import (
+    get_count_trainings,
+    get_training_totals,
+    get_trainings_weapons,
+    get_trainings_with_stats,
+)
 from src.schemas import (
     SessionWeaponCreate,
     SessionWeaponRead,
     SessionWeaponUpdate,
     TrainingSessionCreate,
+    TrainingSessionDetail,
     TrainingSessionRead,
     TrainingSessionUpdate,
 )
@@ -30,6 +40,15 @@ def current_session_weapon(training_id: int, entry_id: int, db: DBSession):
     return session
 
 
+def weapons_by_training(training_ids: list[int], db: DBSession):
+    weapons = {}
+    for training_id, weapon_id, name in get_trainings_weapons(db, training_ids):
+        if training_id not in weapons:
+            weapons[training_id] = []
+        weapons[training_id].append({"id": weapon_id, "name": name})
+    return weapons
+
+
 @router.post("/", response_model=TrainingSessionRead, status_code=201)
 def create_training_sessions(data: TrainingSessionCreate, db: DBSession = Depends(get_db)) -> TrainingSessionRead:
     training_session = TrainingSession(**data.model_dump())
@@ -38,14 +57,32 @@ def create_training_sessions(data: TrainingSessionCreate, db: DBSession = Depend
     db.refresh(training_session)
     return training_session
 
-@router.get("/", response_model=list[TrainingSessionRead], status_code=200)
-def get_all_training_sessions(db: DBSession = Depends(get_db)) -> list[TrainingSessionRead]:
-    return db.execute(select(TrainingSession)).scalars().all()
+@router.get("/", response_model=list[TrainingSessionDetail], status_code=200)
+def get_all_training_sessions(response: Response, weapon_id: int | None = None, date_from: date | None = None,
+                              date_to: date | None = None,
+                              sort: Literal["date_desc", "date_asc", "cost_desc", "cost_asc"] = "date_desc",
+                              limit: int | None = Query(default=None, ge=1), offset: int = Query(default=0, ge=0),
+                              db: DBSession = Depends(get_db)) -> list[TrainingSessionDetail]:
+    response.headers["X-Total-Count"] = str(get_count_trainings(db, weapon_id, date_from, date_to))
+    rows = get_trainings_with_stats(db, weapon_id, date_from, date_to, sort, limit, offset)
+    weapons = weapons_by_training([row[0].id for row in rows], db)
+
+    trainings = []
+    for training, total_rounds, ammo_cost, total_cost in rows:
+        trainings.append(TrainingSessionDetail(**TrainingSessionRead.model_validate(training).model_dump(),
+                                               weapons=weapons.get(training.id, []), total_rounds=total_rounds,
+                                               ammo_cost=ammo_cost, total_cost=total_cost))
+    return trainings
 
 
-@router.get("/{training_id}", response_model=TrainingSessionRead, status_code=200)
-def get_current_session(training_id: int, db: DBSession = Depends(get_db)) -> TrainingSessionRead:
-    return current_training_session(training_id, db)
+@router.get("/{training_id}", response_model=TrainingSessionDetail, status_code=200)
+def get_current_session(training_id: int, db: DBSession = Depends(get_db)) -> TrainingSessionDetail:
+    training = current_training_session(training_id, db)
+    total_rounds, ammo_cost = get_training_totals(db, training_id)
+    weapons = weapons_by_training([training_id], db)
+    return TrainingSessionDetail(**TrainingSessionRead.model_validate(training).model_dump(),
+                                 weapons=weapons.get(training_id, []), total_rounds=total_rounds,
+                                 ammo_cost=ammo_cost, total_cost=ammo_cost + training.cost)
 
 
 @router.patch("/{training_id}", response_model=TrainingSessionRead, status_code=200)
@@ -69,7 +106,7 @@ def delete_current_training(training_id: int, db: DBSession = Depends(get_db)):
 @router.post("/{training_id}/weapons/", response_model=SessionWeaponRead, status_code=201)
 def create_session_weapon(training_id: int, data: SessionWeaponCreate,
                           db: DBSession = Depends(get_db)) -> SessionWeaponRead:
-    get_current_session(training_id, db)
+    current_training_session(training_id, db)
     weapon = db.get(Weapon, data.weapon_id)
     if not weapon:
         raise HTTPException(status_code=404, detail="Weapon not found")
