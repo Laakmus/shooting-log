@@ -1,14 +1,17 @@
-import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, request } from "./client";
+import { toNumber } from "./money";
 import type { components } from "./schema";
 
 export type Weapon = components["schemas"]["WeaponRead"];
 export type WeaponDetail = components["schemas"]["WeaponDetail"];
 export type WeaponCreate = components["schemas"]["WeaponCreate"];
 export type WeaponUpdate = components["schemas"]["WeaponUpdate"];
+export type WeaponHistoryItem = components["schemas"]["WeaponHistoryItem"];
 
 const listKey = ["weapons", "list"] as const;
 const detailKey = (id: number) => ["weapons", "detail", id] as const;
+const historyKey = (id: number) => ["weapons", "history", id] as const;
 
 const fetchDetail = (id: number) => request<WeaponDetail>("/weapons/{weapon_id}", { params: { weapon_id: id } });
 
@@ -16,32 +19,12 @@ const fetchDetail = (id: number) => request<WeaponDetail>("/weapons/{weapon_id}"
 const retryUnlessNotFound = (failureCount: number, error: Error) =>
   !(error instanceof ApiError && error.status === 404) && failureCount < 1;
 
-/**
- * Every weapon (retired ones included) with its total rounds.
- * One request for the list plus one per weapon, because only the detail endpoint returns `total_rounds`.
- */
-export function useWeaponsWithTotals() {
-  const list = useQuery({
+/** Every weapon (retired ones included) with its totals, in a single request. */
+export function useWeapons() {
+  return useQuery({
     queryKey: listKey,
-    queryFn: () => request<Weapon[]>("/weapons/", { query: { include_inactive: true } }),
+    queryFn: () => request<WeaponDetail[]>("/weapons/", { query: { include_inactive: true } }),
   });
-  const details = useQueries({
-    queries: (list.data ?? []).map((weapon) => ({
-      queryKey: detailKey(weapon.id),
-      queryFn: () => fetchDetail(weapon.id),
-    })),
-  });
-
-  const error = list.error ?? details.find((detail) => detail.error)?.error ?? null;
-  const isPending = list.isPending || details.some((detail) => detail.isPending);
-  const weapons = isPending || error ? undefined : details.map((detail) => detail.data as WeaponDetail);
-
-  const refetch = () => {
-    void list.refetch();
-    for (const detail of details) if (detail.error) void detail.refetch();
-  };
-
-  return { weapons, isPending, error, refetch };
 }
 
 export function useWeapon(id: number) {
@@ -53,7 +36,31 @@ export function useWeapon(id: number) {
   });
 }
 
-/** After any change to a weapon every cached query is refreshed (weapon costs also feed the statistics). */
+/** Trainings in which the weapon was used, newest first. */
+export function useWeaponHistory(id: number) {
+  return useQuery({
+    queryKey: historyKey(id),
+    queryFn: () => request<WeaponHistoryItem[]>("/weapons/{weapon_id}/history", { params: { weapon_id: id } }),
+    enabled: Number.isInteger(id),
+    retry: retryUnlessNotFound,
+  });
+}
+
+/**
+ * Average cost of one round: ammunition, plus the purchase price for an owned weapon.
+ * Null when the weapon has not been fired yet.
+ */
+export function costPerRound(weapon: WeaponDetail): number | null {
+  if (weapon.total_rounds <= 0) return null;
+  const ammo = toNumber(weapon.ammo_cost) ?? 0;
+  const purchase = weapon.is_owned ? (toNumber(weapon.purchase_price) ?? 0) : 0;
+  return (ammo + purchase) / weapon.total_rounds;
+}
+
+/**
+ * After any change to a weapon every cached query — the list, the details and the shooting history — is refreshed
+ * (weapon costs also feed the statistics).
+ */
 function useRefreshAll() {
   const queryClient = useQueryClient();
   return () => void queryClient.invalidateQueries();
