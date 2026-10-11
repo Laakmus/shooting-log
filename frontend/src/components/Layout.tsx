@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useTheme } from "../theme/useTheme";
+import { WeaponFormModal } from "./WeaponFormModal";
 
 const NAV = [
   { to: "/trainings", icon: "▤", label: "Treningi" },
@@ -12,11 +13,13 @@ const ITEM =
   "flex w-full cursor-pointer items-center gap-[11px] rounded-lg border px-[9px] py-2 text-left text-[13.5px] whitespace-nowrap focus-visible:-outline-offset-2";
 const ITEM_IDLE = "border-transparent text-muted hover:bg-page hover:text-ink";
 const ITEM_ACTIVE = "border-line bg-accent-soft font-[560] text-accent";
+const SECTION = "px-[9px] pt-[14px] pb-[6px] text-[10.5px] font-semibold tracking-[0.08em] whitespace-nowrap text-muted";
 const ICON = "w-5 flex-none text-center text-[15px]";
 
 /** App shell: side menu (collapsible, icon-only on narrow screens) and the current view. */
 export function Layout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [addingWeapon, setAddingWeapon] = useState(false);
   const { label: themeLabel, cycle: cycleTheme } = useTheme();
 
   // Labels fade out when the menu is collapsed and are always hidden below 720px.
@@ -54,9 +57,15 @@ export function Layout() {
           </NavLink>
         ))}
 
-        <div className={`px-[9px] pt-[14px] pb-[6px] text-[10.5px] font-semibold tracking-[0.08em] whitespace-nowrap text-muted ${text}`}>
-          WIDOK
-        </div>
+        <div className={`${SECTION} ${text}`}>DODAJ</div>
+        <button type="button" title="Nowa broń" onClick={() => setAddingWeapon(true)} className={`${ITEM} ${ITEM_IDLE}`}>
+          <span aria-hidden="true" className={ICON}>
+            ＋
+          </span>
+          <span className={text}>Nowa broń</span>
+        </button>
+
+        <div className={`${SECTION} ${text}`}>WIDOK</div>
         <button type="button" title={`Motyw: ${themeLabel}`} onClick={cycleTheme} className={`${ITEM} ${ITEM_IDLE}`}>
           <span aria-hidden="true" className={ICON}>
             ◐
@@ -81,6 +90,8 @@ export function Layout() {
       <main className="relative min-w-0 overflow-x-hidden">
         <Outlet />
       </main>
+
+      <WeaponFormModal open={addingWeapon} onClose={() => setAddingWeapon(false)} />
     </div>
   );
 }
