@@ -47,9 +47,42 @@ export function formatLongDate(isoDate: string): string {
   return `${Number(isoDate.split("-")[2])} ${formatMonthName(isoDate)}`;
 }
 
-/** Today's date in the browser's time zone as "YYYY-MM-DD" (the format of <input type="date">). */
-export function todayIso(): string {
-  const now = new Date();
+const MONTHS_NOMINATIVE = [
+  "Styczeń",
+  "Luty",
+  "Marzec",
+  "Kwiecień",
+  "Maj",
+  "Czerwiec",
+  "Lipiec",
+  "Sierpień",
+  "Wrzesień",
+  "Październik",
+  "Listopad",
+  "Grudzień",
+] as const;
+
+const MONTHS_SHORT = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"] as const;
+
+/** ISO date or month ("2026-09-08", "2026-09") as "Wrzesień 2026". */
+export function formatMonthTitle(isoDate: string): string {
+  const [year, month] = isoDate.split("-");
+  return `${MONTHS_NOMINATIVE[Number(month) - 1] ?? month} ${year}`;
+}
+
+/** ISO date "2026-09-08" as "wrz". */
+export function formatShortMonth(isoDate: string): string {
+  const month = isoDate.split("-")[1];
+  return MONTHS_SHORT[Number(month) - 1] ?? month ?? "";
+}
+
+/** A date in the browser's time zone as "YYYY-MM-DD" (the format of <input type="date">). */
+export function toIso(date: Date): string {
   const pad = (part: number) => String(part).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** Today's date in the browser's time zone as "YYYY-MM-DD". */
+export function todayIso(): string {
+  return toIso(new Date());
 }

@@ -57,8 +57,8 @@ export function errorMessage(body: unknown, status: number): string {
   return `Serwer odpowiedział błędem (${status}). Spróbuj ponownie.`;
 }
 
-/** The single entry point for talking to the backend. Resolves to `undefined` for 204 responses. */
-export async function request<T = void>(path: ApiPath, options: RequestOptions = {}): Promise<T> {
+/** Sends one request and returns the parsed body with the response headers. The body is `undefined` for 204. */
+async function send(path: ApiPath, options: RequestOptions): Promise<{ body: unknown; headers: Headers }> {
   const hasBody = options.body !== undefined;
   let response: Response;
   try {
@@ -71,9 +71,31 @@ export async function request<T = void>(path: ApiPath, options: RequestOptions =
     throw new ApiError(CONNECTION_ERROR, 0);
   }
 
-  if (response.status === 204) return undefined as T;
+  if (response.status === 204) return { body: undefined, headers: response.headers };
 
   const body: unknown = await response.json().catch(() => null);
   if (!response.ok) throw new ApiError(errorMessage(body, response.status), response.status);
-  return body as T;
+  return { body, headers: response.headers };
+}
+
+/** The single entry point for talking to the backend. Resolves to `undefined` for 204 responses. */
+export async function request<T = void>(path: ApiPath, options: RequestOptions = {}): Promise<T> {
+  return (await send(path, options)).body as T;
+}
+
+/** One page of a list together with the number of all matching rows. */
+export interface Paged<T> {
+  items: T[];
+  total: number;
+}
+
+/**
+ * Like `request`, for list endpoints that report the number of all matching rows
+ * in the `X-Total-Count` response header.
+ */
+export async function requestPaged<T>(path: ApiPath, options: RequestOptions = {}): Promise<Paged<T>> {
+  const { body, headers } = await send(path, options);
+  const items = Array.isArray(body) ? (body as T[]) : [];
+  const total = Number.parseInt(headers.get("X-Total-Count") ?? "", 10);
+  return { items, total: Number.isNaN(total) ? items.length : total };
 }

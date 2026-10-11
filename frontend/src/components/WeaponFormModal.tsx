@@ -1,7 +1,8 @@
-import { type FormEvent, type ReactNode, useState } from "react";
+import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { todayIso } from "../api/format";
 import { useSaveWeapon, type Weapon } from "../api/weapons";
+import { Hint, INPUT, LABEL } from "./Field";
 import { Modal, ModalActions, ModalBody } from "./Modal";
 import { useToast } from "./Toast";
 
@@ -16,14 +17,6 @@ interface WeaponFormModalProps {
 export function WeaponFormModal({ open, weapon, onClose }: WeaponFormModalProps) {
   // Mounted only while open, so every opening starts from the clicked weapon's data.
   return open ? <WeaponForm weapon={weapon} onClose={onClose} /> : null;
-}
-
-const INPUT =
-  "w-full rounded-[7px] border border-line bg-page px-3 py-[9px] text-[15px] text-ink focus:border-accent focus:outline-2 focus:-outline-offset-1 focus:outline-accent";
-const LABEL = "mb-[6px] block text-[12.5px] font-[560]";
-
-function Hint({ children }: { children: ReactNode }) {
-  return <span className="text-[11.5px] font-normal text-muted"> {children}</span>;
 }
 
 function WeaponForm({ weapon, onClose }: { weapon?: Weapon; onClose: () => void }) {
