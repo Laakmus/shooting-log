@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+/* Theme values. Light is the default; dark applies either when the system
+   asks for it (and the user did not force light) or when forced by the user. */
+:root {
+  color-scheme: light;
+  --page: #fbfaf8;
+  --card: #ffffff;
+  --ink: #1c1917;
+  --muted: #6b6560;
+  --line: #e7e3dd;
+  --accent: #8a5a18;
+  --accent-soft: #f5ede0;
+  --accent2: #4a6b7c;
+  --on-accent: #ffffff;
+  --error: #c9443b;
+  --card-shadow: 0 1px 2px rgba(28, 25, 23, 0.04), 0 4px 12px rgba(28, 25, 23, 0.04);
+  --modal-shadow: 0 20px 50px rgba(28, 25, 23, 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #161513;
+    --card: #1f1e1b;
+    --ink: #edeae5;
+    --muted: #9a948c;
+    --line: #33302b;
+    --accent: #d9a65c;
+    --accent-soft: #2b2418;
+    --accent2: #7fa8bc;
+    --on-accent: #1a1613;
+    --error: #e88179;
+    --card-shadow: 0 0 #0000;
+    --modal-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #161513;
+  --card: #1f1e1b;
+  --ink: #edeae5;
+  --muted: #9a948c;
+  --line: #33302b;
+  --accent: #d9a65c;
+  --accent-soft: #2b2418;
+  --accent2: #7fa8bc;
+  --on-accent: #1a1613;
+  --error: #e88179;
+  --card-shadow: 0 0 #0000;
+  --modal-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent2: var(--accent2);
+  --color-on-accent: var(--on-accent);
+  --color-error: var(--error);
+  --color-danger: #b3261e;
+
+  --shadow-card: var(--card-shadow);
+  --shadow-modal: var(--modal-shadow);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, Menlo, monospace;
+
+  --animate-view-in: view-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --animate-fade-in: fade-in 0.2s;
+  --animate-modal-in: modal-in 0.26s cubic-bezier(0.4, 0, 0.2, 1);
+
+  @keyframes view-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes modal-in {
+    from {
+      opacity: 0;
+      transform: translateY(-14px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/* Numbers: monospace with tabular figures so they line up in columns. */
+@utility num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@layer base {
+  body {
+    margin: 0;
+    overflow-x: hidden;
+    background: var(--page);
+    color: var(--ink);
+    font: 15px/1.5 var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+}

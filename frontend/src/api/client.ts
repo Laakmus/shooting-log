@@ -1,0 +1,79 @@
+import type { paths } from "./schema";
+
+/** Every path the backend exposes. Collection paths carry their trailing slash ("/weapons/"). */
+export type ApiPath = keyof paths;
+
+export interface RequestOptions {
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  /** Values for the "{placeholders}" in the path. */
+  params?: Record<string, string | number>;
+  query?: Record<string, string | number | boolean | null | undefined>;
+  body?: unknown;
+}
+
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+const CONNECTION_ERROR = "Brak połączenia z serwerem. Sprawdź połączenie i spróbuj ponownie.";
+
+function buildUrl(path: string, { params = {}, query = {} }: RequestOptions): string {
+  const filled = path.replace(/\{(\w+)\}/g, (_match, name: string) => {
+    const value = params[name];
+    if (value === undefined) throw new Error(`Missing path parameter "${name}" for ${path}`);
+    return encodeURIComponent(String(value));
+  });
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value !== null) search.set(key, String(value));
+  }
+  const queryString = search.toString();
+  return queryString ? `${filled}?${queryString}` : filled;
+}
+
+/**
+ * Turns a FastAPI error body into one readable message.
+ * `detail` is a string for HTTPException and a list of items for Pydantic validation errors.
+ */
+export function errorMessage(body: unknown, status: number): string {
+  const detail = typeof body === "object" && body !== null ? (body as { detail?: unknown }).detail : undefined;
+  if (typeof detail === "string" && detail.trim()) return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item: unknown) => {
+        if (typeof item === "string") return item;
+        const msg = typeof item === "object" && item !== null ? (item as { msg?: unknown }).msg : undefined;
+        return typeof msg === "string" ? msg.replace(/^Value error, /, "") : "";
+      })
+      .filter(Boolean);
+    if (messages.length > 0) return messages.join(" ");
+  }
+  return `Serwer odpowiedział błędem (${status}). Spróbuj ponownie.`;
+}
+
+/** The single entry point for talking to the backend. Resolves to `undefined` for 204 responses. */
+export async function request<T = void>(path: ApiPath, options: RequestOptions = {}): Promise<T> {
+  const hasBody = options.body !== undefined;
+  let response: Response;
+  try {
+    response = await fetch(buildUrl(path, options), {
+      method: options.method ?? "GET",
+      headers: hasBody ? { "Content-Type": "application/json" } : undefined,
+      body: hasBody ? JSON.stringify(options.body) : undefined,
+    });
+  } catch {
+    throw new ApiError(CONNECTION_ERROR, 0);
+  }
+
+  if (response.status === 204) return undefined as T;
+
+  const body: unknown = await response.json().catch(() => null);
+  if (!response.ok) throw new ApiError(errorMessage(body, response.status), response.status);
+  return body as T;
+}

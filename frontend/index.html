@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dziennik strzelecki</title>
+    <script>
+      // Apply the saved theme before first paint to avoid a light flash.
+      // "motyw-i" holds an index: 0 = system, 1 = light, 2 = dark (see src/theme/useTheme.ts).
+      (function () {
+        try {
+          var theme = ["system", "light", "dark"][Number(localStorage.getItem("motyw-i")) || 0];
+          if (theme === "light" || theme === "dark") {
+            document.documentElement.setAttribute("data-theme", theme);
+          }
+        } catch (e) {
+          /* storage unavailable: keep the system theme */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

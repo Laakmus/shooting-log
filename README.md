@@ -70,6 +70,34 @@ Sprawdzenie stylu i typowych błędów:
 python -m ruff check .
 ```
 
+## Frontend
+
+React + TypeScript + Tailwind, built with Vite, in `frontend/`. Requires Node 24.
+
+Development (the API must be running on port 8001; Vite proxies API calls to it):
+
+```bash
+python -m uvicorn src.main:app --reload --port 8001
+cd frontend
+npm install
+npm run dev
+```
+
+Production build. When `frontend/dist` exists, FastAPI serves it at `/`:
+
+```bash
+cd frontend
+npm run build
+```
+
+Regenerate API types after changing backend schemas (reads `/openapi.json` from the running API and writes `frontend/src/api/schema.d.ts`, which is committed):
+
+```bash
+cd frontend
+npm run gen:api
+npm run typecheck
+```
+
 ## Struktura
 
 ```
