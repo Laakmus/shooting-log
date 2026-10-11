@@ -182,6 +182,10 @@ export interface components {
             ammo_cost: string;
             /** Training Sessions Cost */
             training_sessions_cost: string;
+            /** Sessions Count */
+            sessions_count: number;
+            /** Total Rounds */
+            total_rounds: number;
         };
         /** SessionWeaponCreate */
         SessionWeaponCreate: {
@@ -240,6 +244,10 @@ export interface components {
             equipment_cost: string;
             /** Total Cost */
             total_cost: string;
+            /** Total Rounds */
+            total_rounds: number;
+            /** Sessions Count */
+            sessions_count: number;
         };
         /** TrainingSessionCreate */
         TrainingSessionCreate: {

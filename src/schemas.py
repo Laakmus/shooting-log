@@ -130,6 +130,8 @@ class MonthlyCost(BaseModel):
     month: str
     ammo_cost: Decimal
     training_sessions_cost: Decimal
+    sessions_count: int
+    total_rounds: int
 
 
 class TotalCost(BaseModel):
@@ -137,6 +139,8 @@ class TotalCost(BaseModel):
     training_sessions_cost: Decimal
     equipment_cost: Decimal
     total_cost: Decimal
+    total_rounds: int
+    sessions_count: int
 
 
 class StatsRead(BaseModel):
