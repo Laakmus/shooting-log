@@ -85,6 +85,29 @@ def get_monthly_ammo_cost(db: DBSession):
                           ).all()
 
 
+def get_total_rounds(db: DBSession):
+    return db.execute(select(func.coalesce(func.sum(SessionWeapon.rounds_fired), 0))).scalar()
+
+
+def get_monthly_sessions_count(db: DBSession):
+    date_month = func.date_trunc("month", TrainingSession.training_date)
+    return db.execute(select(date_month,
+                             func.count(TrainingSession.id))
+                      .group_by(date_month)
+                      .order_by(date_month)
+                      ).all()
+
+
+def get_monthly_rounds(db: DBSession):
+    date_month = func.date_trunc("month", TrainingSession.training_date)
+    return db.execute(select(date_month,
+                             func.coalesce(func.sum(SessionWeapon.rounds_fired), 0))
+                      .join(TrainingSession, SessionWeapon.session_id == TrainingSession.id)
+                      .group_by(date_month)
+                      .order_by(date_month)
+                      ).all()
+
+
 def filter_trainings(stmt, weapon_id: int | None = None, date_from: date | None = None,
                      date_to: date | None = None):
     if weapon_id is not None:
