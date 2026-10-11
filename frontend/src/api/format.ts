@@ -47,6 +47,14 @@ export function formatLongDate(isoDate: string): string {
   return `${Number(isoDate.split("-")[2])} ${formatMonthName(isoDate)}`;
 }
 
+const WEEKDAYS = ["niedziela", "poniedziałek", "wtorek", "środa", "czwartek", "piątek", "sobota"] as const;
+
+/** ISO date "2026-09-08" as "wtorek". */
+export function formatWeekday(isoDate: string): string {
+  const [year = 0, month = 1, day = 1] = isoDate.split("-").map(Number);
+  return WEEKDAYS[new Date(year, month - 1, day).getDay()] ?? "";
+}
+
 const MONTHS_NOMINATIVE = [
   "Styczeń",
   "Luty",

@@ -1,11 +1,15 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type Paged, request, requestPaged } from "./client";
+import { ApiError, type Paged, request, requestPaged } from "./client";
 import { toIso } from "./format";
 import type { components } from "./schema";
 
 export type Training = components["schemas"]["TrainingSessionDetail"];
 export type TrainingCreate = components["schemas"]["TrainingSessionCreate"];
 export type TrainingUpdate = components["schemas"]["TrainingSessionUpdate"];
+/** One shooting entry of a training: a weapon with the rounds fired from it. */
+export type Entry = components["schemas"]["SessionWeaponRead"];
+export type EntryCreate = components["schemas"]["SessionWeaponCreate"];
+export type EntryUpdate = components["schemas"]["SessionWeaponUpdate"];
 
 export const TRAINING_SORTS = ["date_desc", "date_asc", "cost_desc", "cost_asc"] as const;
 export type TrainingSort = (typeof TRAINING_SORTS)[number];
@@ -80,8 +84,52 @@ export function usePlaceSuggestions(): string[] {
   return [...places].sort((a, b) => a.localeCompare(b, "pl"));
 }
 
+/** A missing training will not appear on a second try. */
+const retryUnlessNotFound = (failureCount: number, error: Error) =>
+  !(error instanceof ApiError && error.status === 404) && failureCount < 1;
+
+// Kept apart from ROOT: these queries do not resolve to Paged<Training>.
+const detailKey = (id: number) => ["training", id] as const;
+
+/** One training with its totals: rounds, ammunition cost and the full cost (ammunition + entry fee). */
+export function useTraining(id: number) {
+  return useQuery({
+    queryKey: detailKey(id),
+    queryFn: () => request<Training>("/training/{training_id}", { params: { training_id: id } }),
+    enabled: Number.isInteger(id),
+    retry: retryUnlessNotFound,
+  });
+}
+
+/** Shooting entries of one training. A weapon may have several of them. */
+export function useTrainingEntries(id: number) {
+  return useQuery({
+    queryKey: [...detailKey(id), "entries"],
+    queryFn: () => request<Entry[]>("/training/{training_id}/weapons/", { params: { training_id: id } }),
+    enabled: Number.isInteger(id),
+    retry: retryUnlessNotFound,
+  });
+}
+
+// Plain functions instead of mutations: the entries window sends a series of them and tracks the progress itself.
+export const createEntry = (trainingId: number, body: EntryCreate) =>
+  request<Entry>("/training/{training_id}/weapons/", { method: "POST", params: { training_id: trainingId }, body });
+
+export const updateEntry = (trainingId: number, entryId: number, body: EntryUpdate) =>
+  request<Entry>("/training/{training_id}/weapons/{entry_id}", {
+    method: "PATCH",
+    params: { training_id: trainingId, entry_id: entryId },
+    body,
+  });
+
+export const deleteEntry = (trainingId: number, entryId: number) =>
+  request("/training/{training_id}/weapons/{entry_id}", {
+    method: "DELETE",
+    params: { training_id: trainingId, entry_id: entryId },
+  });
+
 /** A change to a training also changes weapon totals and the statistics, so every cached query is refreshed. */
-function useRefreshAll() {
+export function useRefreshAll() {
   const queryClient = useQueryClient();
   return () => queryClient.invalidateQueries();
 }
