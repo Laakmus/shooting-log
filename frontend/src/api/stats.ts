@@ -3,9 +3,21 @@ import { request } from "./client";
 import type { components } from "./schema";
 
 export type Stats = components["schemas"]["StatsRead"];
+export type MonthlyCost = components["schemas"]["MonthlyCost"];
+/** One training as a point of the cost chart. */
+export type ChartTraining = components["schemas"]["TrainingSessionDetail"];
 
 export function useStats() {
   return useQuery({ queryKey: ["stats"], queryFn: () => request<Stats>("/stats/") });
+}
+
+/** Every training from the oldest one, in a single request: the points of the cost chart. */
+export function useChartTrainings() {
+  return useQuery({
+    // Kept apart from the "trainings" keys, whose queries all hold paged results.
+    queryKey: ["stats", "trainings"],
+    queryFn: () => request<ChartTraining[]>("/training/", { query: { sort: "date_asc" } }),
+  });
 }
 
 /**
