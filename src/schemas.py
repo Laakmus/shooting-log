@@ -95,6 +95,23 @@ class SessionWeaponRead(BaseModel):
 
 class WeaponDetail(WeaponRead):
     total_rounds: int
+    sessions_count: int
+    ammo_cost: Decimal
+
+
+class WeaponHistoryEntry(BaseModel):
+    magazines_count: int | None = None
+    rounds_per_magazine: int | None = None
+    rounds_fired: int
+
+
+class WeaponHistoryItem(BaseModel):
+    training_id: int
+    training_date: date
+    place: str | None = None
+    rounds_fired: int
+    ammo_cost: Decimal
+    entries: list[WeaponHistoryEntry]
 
 
 class MonthlyCost(BaseModel):

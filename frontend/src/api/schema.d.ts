@@ -41,6 +41,23 @@ export interface paths {
         patch: operations["change_current_weapon_weapons__weapon_id__patch"];
         trace?: never;
     };
+    "/weapons/{weapon_id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Current Weapon History */
+        get: operations["get_current_weapon_history_weapons__weapon_id__history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/training/": {
         parameters: {
             query?: never;
@@ -316,6 +333,37 @@ export interface components {
             is_owned: boolean;
             /** Total Rounds */
             total_rounds: number;
+            /** Sessions Count */
+            sessions_count: number;
+            /** Ammo Cost */
+            ammo_cost: string;
+        };
+        /** WeaponHistoryEntry */
+        WeaponHistoryEntry: {
+            /** Magazines Count */
+            magazines_count?: number | null;
+            /** Rounds Per Magazine */
+            rounds_per_magazine?: number | null;
+            /** Rounds Fired */
+            rounds_fired: number;
+        };
+        /** WeaponHistoryItem */
+        WeaponHistoryItem: {
+            /** Training Id */
+            training_id: number;
+            /**
+             * Training Date
+             * Format: date
+             */
+            training_date: string;
+            /** Place */
+            place?: string | null;
+            /** Rounds Fired */
+            rounds_fired: number;
+            /** Ammo Cost */
+            ammo_cost: string;
+            /** Entries */
+            entries: components["schemas"]["WeaponHistoryEntry"][];
         };
         /** WeaponRead */
         WeaponRead: {
@@ -377,7 +425,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WeaponRead"][];
+                    "application/json": components["schemas"]["WeaponDetail"][];
                 };
             };
             /** @description Validation Error */
@@ -506,6 +554,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WeaponRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_current_weapon_history_weapons__weapon_id__history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                weapon_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeaponHistoryItem"][];
                 };
             };
             /** @description Validation Error */
