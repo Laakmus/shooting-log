@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useTheme } from "../theme/useTheme";
+import { TrainingFormModal } from "./TrainingFormModal";
 import { WeaponFormModal } from "./WeaponFormModal";
 
 const NAV = [
@@ -19,6 +20,7 @@ const ICON = "w-5 flex-none text-center text-[15px]";
 /** App shell: side menu (collapsible, icon-only on narrow screens) and the current view. */
 export function Layout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [addingTraining, setAddingTraining] = useState(false);
   const [addingWeapon, setAddingWeapon] = useState(false);
   const { label: themeLabel, cycle: cycleTheme } = useTheme();
 
@@ -58,6 +60,12 @@ export function Layout() {
         ))}
 
         <div className={`${SECTION} ${text}`}>DODAJ</div>
+        <button type="button" title="Nowy trening" onClick={() => setAddingTraining(true)} className={`${ITEM} ${ITEM_IDLE}`}>
+          <span aria-hidden="true" className={ICON}>
+            ＋
+          </span>
+          <span className={text}>Nowy trening</span>
+        </button>
         <button type="button" title="Nowa broń" onClick={() => setAddingWeapon(true)} className={`${ITEM} ${ITEM_IDLE}`}>
           <span aria-hidden="true" className={ICON}>
             ＋
@@ -91,6 +99,7 @@ export function Layout() {
         <Outlet />
       </main>
 
+      <TrainingFormModal open={addingTraining} onClose={() => setAddingTraining(false)} />
       <WeaponFormModal open={addingWeapon} onClose={() => setAddingWeapon(false)} />
     </div>
   );

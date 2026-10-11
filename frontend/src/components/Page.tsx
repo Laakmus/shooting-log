@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 interface PageProps {
   /** Left out by views that draw their own heading. */
   title?: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   /** Buttons shown on the right of the heading. */
   actions?: ReactNode;
   children?: ReactNode;
